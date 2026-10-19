@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e9e7f7;--body:#f7f6ff;--key:#c9f2e3;--key-t:#0b3d31;--op:#dcd8ff;--op-t:#3a2fd0;
+  --eq:#3a2fd0;--eq-t:#fff;--screen:#1c1a3d;--screen-t:#f2f1ff;--muted:#9a96cc;--line:#d6d2f0;
+  --shadow:0 30px 60px -20px rgba(58,47,208,.35),0 8px 18px rgba(28,26,61,.12);
+  --key-shadow:0 2px 0 rgba(28,26,61,.12);
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e0d20;--body:#1a1838;--key:#1d4f48;--key-t:#d7fff0;--op:#36327a;--op-t:#c9c4ff;
+    --eq:#8cf0cb;--eq-t:#0e1a15;--screen:#0e0d20;--screen-t:#f2f1ff;--muted:#7d79b8;--line:#2e2b60;
+    --shadow:0 30px 60px -20px rgba(0,0,0,.7),0 8px 18px rgba(0,0,0,.4);--key-shadow:0 2px 0 rgba(0,0,0,.35);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e0d20;--body:#1a1838;--key:#1d4f48;--key-t:#d7fff0;--op:#36327a;--op-t:#c9c4ff;
+  --eq:#8cf0cb;--eq-t:#0e1a15;--screen:#0e0d20;--screen-t:#f2f1ff;--muted:#7d79b8;--line:#2e2b60;
+  --shadow:0 30px 60px -20px rgba(0,0,0,.7),0 8px 18px rgba(0,0,0,.4);--key-shadow:0 2px 0 rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--bg);color:var(--key-t);font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;
+  display:flex;align-items:center;justify-content:center;gap:28px;flex-wrap:wrap;padding:28px 16px;min-height:100vh}
+.calc{width:min(380px,100%);background:var(--body);border-radius:36px;padding:18px;box-shadow:var(--shadow);
+  animation:rise .7s cubic-bezier(.2,.8,.2,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}}
+.screen{background:var(--screen);color:var(--screen-t);border-radius:24px;padding:20px 22px 18px;min-height:150px;
+  display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;overflow:hidden;margin-bottom:16px}
+.prev{color:var(--muted);font-size:18px;font-weight:600;min-height:26px;font-variant-numeric:tabular-nums;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.main{font-weight:800;font-size:56px;letter-spacing:-.03em;line-height:1.1;font-variant-numeric:tabular-nums;max-width:100%;
+  overflow-x:auto;white-space:nowrap;scrollbar-width:none;transition:font-size .15s}
+.main::-webkit-scrollbar{display:none}
+.main.m{font-size:42px}.main.s{font-size:32px}.main.xs{font-size:24px}
+.main.err{font-size:22px;color:#ff8f9d}
+.pad{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.pad button{font:inherit;font-weight:700;font-size:24px;height:68px;border:0;border-radius:22px;background:var(--key);
+  color:var(--key-t);box-shadow:var(--key-shadow);cursor:pointer;transition:transform .08s,box-shadow .08s,filter .15s;
+  -webkit-tap-highlight-color:transparent}
+.pad button:hover{filter:brightness(.97)}
+.pad button:active,.pad button.hit{transform:translateY(2px) scale(.97);box-shadow:none}
+.pad button.op{background:var(--op);color:var(--op-t)}
+.pad button.eq{background:var(--eq);color:var(--eq-t);font-size:30px}
+.pad button.fn{font-size:19px}
+button:focus-visible{outline:3px solid var(--op-t);outline-offset:2px}
+.hist{width:min(300px,100%);align-self:stretch;max-height:640px;background:var(--body);border-radius:28px;padding:20px;
+  box-shadow:var(--shadow);display:flex;flex-direction:column;animation:rise .7s .1s cubic-bezier(.2,.8,.2,1) both}
+.hist header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.hist h2{font-size:17px;font-weight:800}
+.hist header button{font:inherit;font-size:14px;font-weight:600;background:none;border:0;color:var(--op-t);cursor:pointer;border-radius:8px;padding:4px 8px}
+.hist ul{list-style:none;padding:0;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:2px}
+.hist li button{width:100%;text-align:right;font:inherit;background:none;border:0;border-bottom:1px solid var(--line);
+  padding:12px 4px;cursor:pointer;color:var(--key-t);border-radius:8px}
+.hist li button:hover{background:var(--op)}
+.hist li small{display:block;color:var(--muted);font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.hist li b{font-size:22px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.empty{color:var(--muted);font-size:15px;line-height:1.5;padding:8px 2px}
+[hidden]{display:none!important}
+.tabs{display:flex;gap:4px;background:var(--bg);padding:4px;border-radius:18px;margin-bottom:14px}
+.tabs button{flex:1;font:inherit;font-weight:700;font-size:15px;border:0;border-radius:14px;padding:10px 6px;background:none;color:var(--muted);cursor:pointer;transition:background .15s,color .15s}
+.tabs button[aria-selected="true"]{background:var(--eq);color:var(--eq-t)}
+.tool{display:flex;flex-direction:column;gap:14px}
+.tool label{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:600;color:var(--muted)}
+.tool input,.tool select{font:inherit;font-size:18px;font-weight:600;color:var(--key-t);background:var(--key);border:2px solid transparent;border-radius:16px;padding:13px 14px;width:100%;min-width:0}
+.tool input:focus,.tool select:focus{outline:none;border-color:var(--op-t)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.result{background:var(--screen);color:var(--screen-t);border-radius:24px;padding:20px 22px}
+.result .lbl{color:var(--muted);font-size:14px;font-weight:600;margin-bottom:6px}
+.result .big{font-size:32px;font-weight:800;letter-spacing:-.02em;line-height:1.15;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.msg{color:#ff8f9d;font-size:16px;font-weight:600}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.stats div{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.stats span{display:block;color:var(--muted);font-size:13px;font-weight:600;margin-bottom:2px}
+.bar{height:10px;border-radius:6px;background:#ff8f9d;overflow:hidden;margin-top:18px}
+.bar i{display:block;height:100%;background:#8cf0cb}
+.cap{display:flex;gap:14px;font-size:13px;font-weight:600;margin-top:8px}
+@media (max-width:720px){.hist{align-self:auto;max-height:none}.calc{border-radius:30px}.pad button{height:62px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main class="calc" aria-label="Calculator">
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-t="calc">Calculator</button>
+    <button role="tab" aria-selected="false" data-t="age">Age</button>
+    <button role="tab" aria-selected="false" data-t="emi">Loan EMI</button>
+  </div>
+  <section id="p-calc">
+  <div class="screen" aria-live="polite">
+    <div class="prev" id="prev"></div>
+    <div class="main" id="main">0</div>
+  </div>
+  <div class="pad" id="pad">
+    <button class="fn op" data-k="AC" aria-label="Clear all">AC</button>
+    <button class="fn op" data-k="DEL" aria-label="Delete last">⌫</button>
+    <button class="op" data-k="%" aria-label="Percent">%</button>
+    <button class="op" data-k="/" aria-label="Divide">÷</button>
+    <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+    <button class="op" data-k="*" aria-label="Multiply">×</button>
+    <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+    <button class="op" data-k="-" aria-label="Subtract">−</button>
+    <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+    <button class="op" data-k="+" aria-label="Add">+</button>
+    <button data-k="NEG" aria-label="Toggle sign">±</button><button data-k="0">0</button>
+    <button data-k=".">.</button><button class="eq" data-k="=" aria-label="Equals">=</button>
+  </div>
+</section>
+  <section class="tool" id="p-age" hidden>
+    <div class="row">
+      <label>Date of birth<input type="date" id="dob"></label>
+      <label>Age on<input type="date" id="ageon"></label>
+    </div>
+    <div class="result" aria-live="polite">
+      <div class="lbl">Your age</div>
+      <div class="big" id="ageMain">Enter your date of birth</div>
+      <div class="stats" id="ageStats"></div>
+    </div>
+  </section>
+  <section class="tool" id="p-emi" hidden>
+    <div class="row">
+      <label>Currency<select id="cur"><option>₹</option><option>$</option><option>€</option><option>£</option></select></label>
+      <label>Loan amount<input id="amt" type="number" inputmode="decimal" min="0" value="500000"></label>
+    </div>
+    <label>Interest rate (% per year)<input id="rate" type="number" inputmode="decimal" min="0" step="0.1" value="8.5"></label>
+    <div class="row">
+      <label>Tenure<input id="ten" type="number" inputmode="numeric" min="1" value="5"></label>
+      <label>Unit<select id="unit"><option value="y">Years</option><option value="m">Months</option></select></label>
+    </div>
+    <div class="result" aria-live="polite">
+      <div class="lbl">Monthly EMI</div>
+      <div class="big" id="emi"></div>
+      <div id="emiBar"><div class="bar"><i></i></div><div class="cap"><span style="color:#8cf0cb">● Principal</span><span style="color:#ff8f9d">● Interest</span></div></div>
+      <div class="stats" id="emiStats"></div>
+    </div>
+  </section>
+</main>
+
+<aside class="hist" aria-label="History">
+  <header><h2>History</h2><button id="clr">Clear</button></header>
+  <ul id="list"></ul>
+</aside>
+
+<script>
+(function(){
+  var expr='',justEq=false,hist=[];
+  var $main=document.getElementById('main'),$prev=document.getElementById('prev'),$list=document.getElementById('list');
+  try{hist=JSON.parse(localStorage.getItem('calc-hist')||'[]')}catch(e){hist=[]}
+
+  function evaluate(s){
+    var i=0;
+    function peek(){return s[i]}
+    function ex(){var v=term();while(peek()==='+'||peek()==='-'){var o=s[i++],r=term();v=o==='+'?v+r:v-r}return v}
+    function term(){var v=un();while(peek()==='*'||peek()==='/'){var o=s[i++],r=un();v=o==='*'?v*r:v/r}return v}
+    function un(){if(peek()==='-'){i++;return -un()}return post()}
+    function post(){var v=prim();while(peek()==='%'){i++;v/=100}return v}
+    function prim(){
+      if(peek()==='('){i++;var v=ex();if(peek()!==')')throw 0;i++;return v}
+      var m=/^\d*\.?\d+|^\d+\./.exec(s.slice(i));if(!m)throw 0;i+=m[0].length;return parseFloat(m[0]);
+    }
+    var r=ex();if(i!==s.length)throw 0;return r;
+  }
+  function fmt(v){
+    if(!isFinite(v))return null;
+    v=parseFloat(v.toPrecision(12));
+    var a=Math.abs(v);
+    if(a!==0&&(a>=1e12||a<1e-9))return v.toExponential(6).replace(/\.?0+e/,'e');
+    return String(v);
+  }
+  function pretty(s){
+    return s.replace(/\d+(\.\d*)?/g,function(n){
+      var p=n.split('.');p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,',');return p.join('.');
+    }).replace(/\*/g,'×').replace(/\//g,'÷').replace(/(\d|\)|%)-/g,'$1−').replace(/-/g,'−');
+  }
+  function live(){
+    var s=expr.replace(/[+\-*\/.]+$/,'');if(!s)return null;
+    try{var v=fmt(evaluate(s));return v}catch(e){return null}
+  }
+  function render(err){
+    var t=expr?pretty(expr):'0';
+    $main.className='main'+(err?' err':t.length>16?' xs':t.length>12?' s':t.length>8?' m':'');
+    $main.textContent=err||t;
+    if(err||justEq){$prev.textContent=err?'':$prev.textContent;return}
+    var l=live();$prev.textContent=(l!==null&&/[+\-*\/%]/.test(expr.replace(/^-/,'').replace(/\(-/g,'(')))?'= '+pretty(l):'';
+  }
+  function save(){try{localStorage.setItem('calc-hist',JSON.stringify(hist.slice(0,30)))}catch(e){}}
+  function drawHist(){
+    if(!hist.length){$list.innerHTML='<li class="empty">Finished calculations show up here. Tap one to reuse its result.</li>';return}
+    $list.innerHTML='';
+    hist.forEach(function(h){
+      var li=document.createElement('li'),b=document.createElement('button');
+      b.innerHTML='<small></small><b></b>';b.children[0].textContent=pretty(h.e)+' =';b.children[1].textContent=pretty(h.r);
+      b.onclick=function(){expr=h.r;justEq=false;render()};li.appendChild(b);$list.appendChild(li);
+    });
+  }
+  function press(k){
+    var isOp=/^[+\-*\/]$/.test(k);
+    if(k==='AC'){expr='';justEq=false;$prev.textContent='';return render()}
+    if(k==='DEL'){if(justEq){expr='';justEq=false;$prev.textContent=''}else expr=expr.slice(0,-1);return render()}
+    if(k==='='){
+      var s=expr.replace(/[+\-*\/.]+$/,'');if(!s)return;
+      try{
+        var v=evaluate(s),r=fmt(v);
+        if(r===null)return render("Can't divide by zero");
+        hist.unshift({e:s,r:r});save();drawHist();
+        $prev.textContent=pretty(s)+' =';expr=r;justEq=true;render();
+      }catch(e){render('Check the expression')}
+      return;
+    }
+    if(k==='NEG'){
+      if(justEq)justEq=false;
+      var m=/\(-(\d*\.?\d+)\)$/.exec(expr);
+      if(m)expr=expr.slice(0,m.index)+m[1];
+      else if(/-?(\d*\.?\d+)$/.test(expr)){
+        var n=/(\d*\.?\d+)$/.exec(expr);
+        if(expr.length===n[0].length+1&&expr[0]==='-')expr=n[0];
+        else expr=expr.slice(0,n.index)+'(-'+n[0]+')';
+      }
+      return render();
+    }
+    if(justEq){
+      if(isOp||k==='%'){justEq=false;$prev.textContent=''}
+      else{expr='';justEq=false;$prev.textContent=''}
+    }
+    if(isOp){
+      if(!expr){if(k==='-')expr='-';return render()}
+      if(expr==='-')return;
+      if(/[+\-*\/]$/.test(expr))expr=expr.slice(0,-1);
+      expr+=k;return render();
+    }
+    if(k==='%'){if(/[\d)]$/.test(expr)&&!/%$/.test(expr))expr+='%';return render()}
+    if(k==='.'){
+      var last=expr.split(/[+\-*\/()%]/).pop();
+      if(last.indexOf('.')>-1)return;
+      if(!last)expr+='0';expr+='.';return render();
+    }
+    if(/\)$|%$/.test(expr))expr+='*';
+    var cur=expr.split(/[+\-*\/()%]/).pop().replace('.','');
+    if(cur.length>=15)return;
+    if(expr==='0')expr='';
+    expr+=k;render();
+  }
+  document.getElementById('pad').addEventListener('click',function(e){
+    var b=e.target.closest('button');if(b)press(b.dataset.k);
+  });
+  document.getElementById('clr').onclick=function(){hist=[];save();drawHist()};
+  var map={Enter:'=','=':'=',Backspace:'DEL',Escape:'AC',Delete:'AC','x':'*','X':'*'};
+  document.addEventListener('keydown',function(e){
+    if(e.ctrlKey||e.metaKey||e.altKey)return;
+    var k=map[e.key]||e.key;
+    if(!/^([0-9.+\-*\/%]|=|DEL|AC)$/.test(k))return;
+    if(e.target.tagName==='BUTTON'&&(e.key==='Enter'))return;
+    e.preventDefault();
+    var btn=document.querySelector('.pad [data-k="'+(k==='*'?'*':k)+'"]');
+    if(btn){btn.classList.add('hit');setTimeout(function(){btn.classList.remove('hit')},110)}
+    press(k);
+  });
+  var tabs=document.querySelectorAll('.tabs button'),panels={calc:document.getElementById('p-calc'),age:document.getElementById('p-age'),emi:document.getElementById('p-emi')},$h=document.querySelector('.hist');
+  tabs.forEach(function(b){b.onclick=function(){
+    tabs.forEach(function(x){x.setAttribute('aria-selected',x===b)});
+    for(var k in panels)panels[k].hidden=k!==b.dataset.t;
+    $h.hidden=b.dataset.t!=='calc';
+  }});
+  function stat(l,v){return '<div><span>'+l+'</span>'+v+'</div>'}
+  function iso(d){var m=d.getMonth()+1,dd=d.getDate();return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(dd<10?'0':'')+dd}
+  function pd(s){var p=s.split('-');return p.length===3&&p[0]?new Date(+p[0],+p[1]-1,+p[2]):null}
+  var $dob=document.getElementById('dob'),$on=document.getElementById('ageon'),$am=document.getElementById('ageMain'),$as=document.getElementById('ageStats');
+  function age(){
+    var d=pd($dob.value),t=pd($on.value);
+    if(!d||!t){$am.textContent='Enter your date of birth';$as.innerHTML='';return}
+    if(d>t){$am.innerHTML='<span class="msg">Date of birth must be before the "Age on" date.</span>';$as.innerHTML='';return}
+    var y=t.getFullYear()-d.getFullYear(),m=t.getMonth()-d.getMonth(),dy=t.getDate()-d.getDate();
+    if(dy<0){m--;dy+=new Date(t.getFullYear(),t.getMonth(),0).getDate()}
+    if(m<0){y--;m+=12}
+    var U=function(x){return Date.UTC(x.getFullYear(),x.getMonth(),x.getDate())};
+    var days=Math.round((U(t)-U(d))/864e5);
+    var nb=new Date(t.getFullYear(),d.getMonth(),d.getDate());if(nb<t)nb.setFullYear(t.getFullYear()+1);
+    var left=Math.round((U(nb)-U(t))/864e5),n=function(x){return x.toLocaleString('en-US')};
+    $am.textContent=y+(y===1?' year, ':' years, ')+m+(m===1?' month, ':' months, ')+dy+(dy===1?' day':' days');
+    $as.innerHTML=stat('Total months',n(y*12+m))+stat('Total weeks',n(Math.floor(days/7)))+stat('Total days',n(days))+stat('Next birthday',left===0?'Today 🎉':'In '+n(left)+(left===1?' day':' days'));
+  }
+  $on.value=iso(new Date());$dob.max=iso(new Date());
+  $dob.addEventListener('input',age);$on.addEventListener('input',age);age();
+  var E={},$emi=document.getElementById('emi'),$es=document.getElementById('emiStats'),$bar=document.getElementById('emiBar');
+  ['amt','rate','ten','unit','cur'].forEach(function(i){E[i]=document.getElementById(i);E[i].addEventListener('input',emi);E[i].addEventListener('change',emi)});
+  function emi(){
+    var P=parseFloat(E.amt.value),R=parseFloat(E.rate.value),T=parseFloat(E.ten.value);
+    if(!(P>0)||!(R>=0)||!(T>0)){$emi.innerHTML='<span class="msg">Enter an amount, rate and tenure.</span>';$es.innerHTML='';$bar.hidden=true;return}
+    var n=Math.max(1,Math.round(E.unit.value==='y'?T*12:T)),r=R/1200,c=E.cur.value,loc=c==='₹'?'en-IN':'en-US';
+    var e=r===0?P/n:P*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1),tot=e*n,intr=tot-P;
+    var f=function(x){return c+' '+x.toLocaleString(loc,{maximumFractionDigits:0})};
+    $emi.textContent=f(e);
+    $es.innerHTML=stat('Loan amount',f(P))+stat('Total interest',f(intr))+stat('Total payment',f(tot))+stat('Months',n);
+    $bar.hidden=false;$bar.querySelector('i').style.width=(P/tot*100)+'%';
+  }
+  emi();
+  drawHist();render();
+})();
+</script>
+</body>
+</html>
