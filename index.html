@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e9e7f7;--body:#f7f6ff;--key:#fff;--key-t:#1c1a3d;--op:#dcd8ff;--op-t:#3a2fd0;
+  --eq:#3a2fd0;--eq-t:#fff;--screen:#1c1a3d;--screen-t:#f2f1ff;--muted:#9a96cc;--line:#d6d2f0;
+  --shadow:0 30px 60px -20px rgba(58,47,208,.35),0 8px 18px rgba(28,26,61,.12);
+  --key-shadow:0 2px 0 rgba(28,26,61,.12);
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e0d20;--body:#1a1838;--key:#26244f;--key-t:#f2f1ff;--op:#36327a;--op-t:#c9c4ff;
+    --eq:#8cf0cb;--eq-t:#0e1a15;--screen:#0e0d20;--screen-t:#f2f1ff;--muted:#7d79b8;--line:#2e2b60;
+    --shadow:0 30px 60px -20px rgba(0,0,0,.7),0 8px 18px rgba(0,0,0,.4);--key-shadow:0 2px 0 rgba(0,0,0,.35);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e0d20;--body:#1a1838;--key:#26244f;--key-t:#f2f1ff;--op:#36327a;--op-t:#c9c4ff;
+  --eq:#8cf0cb;--eq-t:#0e1a15;--screen:#0e0d20;--screen-t:#f2f1ff;--muted:#7d79b8;--line:#2e2b60;
+  --shadow:0 30px 60px -20px rgba(0,0,0,.7),0 8px 18px rgba(0,0,0,.4);--key-shadow:0 2px 0 rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--bg);color:var(--key-t);font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;
+  display:flex;align-items:center;justify-content:center;gap:28px;flex-wrap:wrap;padding:28px 16px;min-height:100vh}
+.calc{width:min(380px,100%);background:var(--body);border-radius:36px;padding:18px;box-shadow:var(--shadow);
+  animation:rise .7s cubic-bezier(.2,.8,.2,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}}
+.screen{background:var(--screen);color:var(--screen-t);border-radius:24px;padding:20px 22px 18px;min-height:150px;
+  display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;overflow:hidden;margin-bottom:16px}
+.prev{color:var(--muted);font-size:18px;font-weight:600;min-height:26px;font-variant-numeric:tabular-nums;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.main{font-weight:800;font-size:56px;letter-spacing:-.03em;line-height:1.1;font-variant-numeric:tabular-nums;max-width:100%;
+  overflow-x:auto;white-space:nowrap;scrollbar-width:none;transition:font-size .15s}
+.main::-webkit-scrollbar{display:none}
+.main.m{font-size:42px}.main.s{font-size:32px}.main.xs{font-size:24px}
+.main.err{font-size:22px;color:#ff8f9d}
+.pad{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.pad button{font:inherit;font-weight:700;font-size:24px;height:68px;border:0;border-radius:22px;background:var(--key);
+  color:var(--key-t);box-shadow:var(--key-shadow);cursor:pointer;transition:transform .08s,box-shadow .08s,filter .15s;
+  -webkit-tap-highlight-color:transparent}
+.pad button:hover{filter:brightness(.97)}
+.pad button:active,.pad button.hit{transform:translateY(2px) scale(.97);box-shadow:none}
+.pad button.op{background:var(--op);color:var(--op-t)}
+.pad button.eq{background:var(--eq);color:var(--eq-t);font-size:30px}
+.pad button.fn{font-size:19px}
+button:focus-visible{outline:3px solid var(--op-t);outline-offset:2px}
+.hist{width:min(300px,100%);align-self:stretch;max-height:640px;background:var(--body);border-radius:28px;padding:20px;
+  box-shadow:var(--shadow);display:flex;flex-direction:column;animation:rise .7s .1s cubic-bezier(.2,.8,.2,1) both}
+.hist header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.hist h2{font-size:17px;font-weight:800}
+.hist header button{font:inherit;font-size:14px;font-weight:600;background:none;border:0;color:var(--op-t);cursor:pointer;border-radius:8px;padding:4px 8px}
+.hist ul{list-style:none;padding:0;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:2px}
+.hist li button{width:100%;text-align:right;font:inherit;background:none;border:0;border-bottom:1px solid var(--line);
+  padding:12px 4px;cursor:pointer;color:var(--key-t);border-radius:8px}
+.hist li button:hover{background:var(--op)}
+.hist li small{display:block;color:var(--muted);font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.hist li b{font-size:22px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.empty{color:var(--muted);font-size:15px;line-height:1.5;padding:8px 2px}
+@media (max-width:720px){.hist{align-self:auto;max-height:none}.calc{border-radius:30px}.pad button{height:62px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main class="calc" aria-label="Calculator">
+  <div class="screen" aria-live="polite">
+    <div class="prev" id="prev"></div>
+    <div class="main" id="main">0</div>
+  </div>
+  <div class="pad" id="pad">
+    <button class="fn op" data-k="AC" aria-label="Clear all">AC</button>
+    <button class="fn op" data-k="DEL" aria-label="Delete last">⌫</button>
+    <button class="op" data-k="%" aria-label="Percent">%</button>
+    <button class="op" data-k="/" aria-label="Divide">÷</button>
+    <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+    <button class="op" data-k="*" aria-label="Multiply">×</button>
+    <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+    <button class="op" data-k="-" aria-label="Subtract">−</button>
+    <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+    <button class="op" data-k="+" aria-label="Add">+</button>
+    <button data-k="NEG" aria-label="Toggle sign">±</button><button data-k="0">0</button>
+    <button data-k=".">.</button><button class="eq" data-k="=" aria-label="Equals">=</button>
+  </div>
+</main>
+
+<aside class="hist" aria-label="History">
+  <header><h2>History</h2><button id="clr">Clear</button></header>
+  <ul id="list"></ul>
+</aside>
+
+<script>
+(function(){
+  var expr='',justEq=false,hist=[];
+  var $main=document.getElementById('main'),$prev=document.getElementById('prev'),$list=document.getElementById('list');
+  try{hist=JSON.parse(localStorage.getItem('calc-hist')||'[]')}catch(e){hist=[]}
+
+  function evaluate(s){
+    var i=0;
+    function peek(){return s[i]}
+    function ex(){var v=term();while(peek()==='+'||peek()==='-'){var o=s[i++],r=term();v=o==='+'?v+r:v-r}return v}
+    function term(){var v=un();while(peek()==='*'||peek()==='/'){var o=s[i++],r=un();v=o==='*'?v*r:v/r}return v}
+    function un(){if(peek()==='-'){i++;return -un()}return post()}
+    function post(){var v=prim();while(peek()==='%'){i++;v/=100}return v}
+    function prim(){
+      if(peek()==='('){i++;var v=ex();if(peek()!==')')throw 0;i++;return v}
+      var m=/^\d*\.?\d+|^\d+\./.exec(s.slice(i));if(!m)throw 0;i+=m[0].length;return parseFloat(m[0]);
+    }
+    var r=ex();if(i!==s.length)throw 0;return r;
+  }
+  function fmt(v){
+    if(!isFinite(v))return null;
+    v=parseFloat(v.toPrecision(12));
+    var a=Math.abs(v);
+    if(a!==0&&(a>=1e12||a<1e-9))return v.toExponential(6).replace(/\.?0+e/,'e');
+    return String(v);
+  }
+  function pretty(s){
+    return s.replace(/\d+(\.\d*)?/g,function(n){
+      var p=n.split('.');p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,',');return p.join('.');
+    }).replace(/\*/g,'×').replace(/\//g,'÷').replace(/(\d|\)|%)-/g,'$1−').replace(/-/g,'−');
+  }
+  function live(){
+    var s=expr.replace(/[+\-*\/.]+$/,'');if(!s)return null;
+    try{var v=fmt(evaluate(s));return v}catch(e){return null}
+  }
+  function render(err){
+    var t=expr?pretty(expr):'0';
+    $main.className='main'+(err?' err':t.length>16?' xs':t.length>12?' s':t.length>8?' m':'');
+    $main.textContent=err||t;
+    if(err||justEq){$prev.textContent=err?'':$prev.textContent;return}
+    var l=live();$prev.textContent=(l!==null&&/[+\-*\/%]/.test(expr.replace(/^-/,'').replace(/\(-/g,'(')))?'= '+pretty(l):'';
+  }
+  function save(){try{localStorage.setItem('calc-hist',JSON.stringify(hist.slice(0,30)))}catch(e){}}
+  function drawHist(){
+    if(!hist.length){$list.innerHTML='<li class="empty">Finished calculations show up here. Tap one to reuse its result.</li>';return}
+    $list.innerHTML='';
+    hist.forEach(function(h){
+      var li=document.createElement('li'),b=document.createElement('button');
+      b.innerHTML='<small></small><b></b>';b.children[0].textContent=pretty(h.e)+' =';b.children[1].textContent=pretty(h.r);
+      b.onclick=function(){expr=h.r;justEq=false;render()};li.appendChild(b);$list.appendChild(li);
+    });
+  }
+  function press(k){
+    var isOp=/^[+\-*\/]$/.test(k);
+    if(k==='AC'){expr='';justEq=false;$prev.textContent='';return render()}
+    if(k==='DEL'){if(justEq){expr='';justEq=false;$prev.textContent=''}else expr=expr.slice(0,-1);return render()}
+    if(k==='='){
+      var s=expr.replace(/[+\-*\/.]+$/,'');if(!s)return;
+      try{
+        var v=evaluate(s),r=fmt(v);
+        if(r===null)return render("Can't divide by zero");
+        hist.unshift({e:s,r:r});save();drawHist();
+        $prev.textContent=pretty(s)+' =';expr=r;justEq=true;render();
+      }catch(e){render('Check the expression')}
+      return;
+    }
+    if(k==='NEG'){
+      if(justEq)justEq=false;
+      var m=/\(-(\d*\.?\d+)\)$/.exec(expr);
+      if(m)expr=expr.slice(0,m.index)+m[1];
+      else if(/-?(\d*\.?\d+)$/.test(expr)){
+        var n=/(\d*\.?\d+)$/.exec(expr);
+        if(expr.length===n[0].length+1&&expr[0]==='-')expr=n[0];
+        else expr=expr.slice(0,n.index)+'(-'+n[0]+')';
+      }
+      return render();
+    }
+    if(justEq){
+      if(isOp||k==='%'){justEq=false;$prev.textContent=''}
+      else{expr='';justEq=false;$prev.textContent=''}
+    }
+    if(isOp){
+      if(!expr){if(k==='-')expr='-';return render()}
+      if(expr==='-')return;
+      if(/[+\-*\/]$/.test(expr))expr=expr.slice(0,-1);
+      expr+=k;return render();
+    }
+    if(k==='%'){if(/[\d)]$/.test(expr)&&!/%$/.test(expr))expr+='%';return render()}
+    if(k==='.'){
+      var last=expr.split(/[+\-*\/()%]/).pop();
+      if(last.indexOf('.')>-1)return;
+      if(!last)expr+='0';expr+='.';return render();
+    }
+    if(/\)$|%$/.test(expr))expr+='*';
+    var cur=expr.split(/[+\-*\/()%]/).pop().replace('.','');
+    if(cur.length>=15)return;
+    if(expr==='0')expr='';
+    expr+=k;render();
+  }
+  document.getElementById('pad').addEventListener('click',function(e){
+    var b=e.target.closest('button');if(b)press(b.dataset.k);
+  });
+  document.getElementById('clr').onclick=function(){hist=[];save();drawHist()};
+  var map={Enter:'=','=':'=',Backspace:'DEL',Escape:'AC',Delete:'AC','x':'*','X':'*'};
+  document.addEventListener('keydown',function(e){
+    if(e.ctrlKey||e.metaKey||e.altKey)return;
+    var k=map[e.key]||e.key;
+    if(!/^([0-9.+\-*\/%]|=|DEL|AC)$/.test(k))return;
+    if(e.target.tagName==='BUTTON'&&(e.key==='Enter'))return;
+    e.preventDefault();
+    var btn=document.querySelector('.pad [data-k="'+(k==='*'?'*':k)+'"]');
+    if(btn){btn.classList.add('hit');setTimeout(function(){btn.classList.remove('hit')},110)}
+    press(k);
+  });
+  drawHist();render();
+})();
+</script>
+</body>
+</html>
