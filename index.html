@@ -85,6 +85,8 @@ button:focus-visible{outline:3px solid var(--op-t);outline-offset:2px}
 .bar{height:10px;border-radius:6px;background:#ff8f9d;overflow:hidden;margin-top:18px}
 .bar i{display:block;height:100%;background:#8cf0cb}
 .cap{display:flex;gap:14px;font-size:13px;font-weight:600;margin-top:8px}
+.go{font:inherit;font-weight:800;font-size:18px;border:0;border-radius:18px;padding:16px;background:var(--eq);color:var(--eq-t);cursor:pointer;box-shadow:var(--key-shadow);transition:transform .08s}
+.go:active{transform:translateY(2px);box-shadow:none}
 @media (max-width:720px){.hist{align-self:auto;max-height:none}.calc{border-radius:30px}.pad button{height:62px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -121,6 +123,7 @@ button:focus-visible{outline:3px solid var(--op-t);outline-offset:2px}
       <label>Date of birth<input type="date" id="dob"></label>
       <label>Age on<input type="date" id="ageon"></label>
     </div>
+    <button class="go" id="goAge" type="button">Calculate age</button>
     <div class="result" aria-live="polite">
       <div class="lbl">Your age</div>
       <div class="big" id="ageMain">Enter your date of birth</div>
@@ -137,6 +140,7 @@ button:focus-visible{outline:3px solid var(--op-t);outline-offset:2px}
       <label>Tenure<input id="ten" type="number" inputmode="numeric" min="1" value="5"></label>
       <label>Unit<select id="unit"><option value="y">Years</option><option value="m">Months</option></select></label>
     </div>
+    <button class="go" id="goEmi" type="button">Calculate EMI</button>
     <div class="result" aria-live="polite">
       <div class="lbl">Monthly EMI</div>
       <div class="big" id="emi"></div>
@@ -303,6 +307,9 @@ button:focus-visible{outline:3px solid var(--op-t);outline-offset:2px}
     $es.innerHTML=stat('Loan amount',f(P))+stat('Total interest',f(intr))+stat('Total payment',f(tot))+stat('Months',n);
     $bar.hidden=false;$bar.querySelector('i').style.width=(P/tot*100)+'%';
   }
+  document.getElementById('goAge').addEventListener('click',age);
+  document.getElementById('goEmi').addEventListener('click',emi);
+  $dob.addEventListener('change',age);$on.addEventListener('change',age);
   emi();
   drawHist();render();
 })();
